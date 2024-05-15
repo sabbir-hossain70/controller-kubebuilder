@@ -1,32 +1,23 @@
----
+# permissions for end users to view customkinds.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: manager-role
+  labels:
+    app.kubernetes.io/name: controller-kubebuilder
+    app.kubernetes.io/managed-by: kustomize
+  name: customkind-viewer-role
 rules:
 - apiGroups:
   - crd.sabbir.com
   resources:
   - customkinds
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
-- apiGroups:
-  - crd.sabbir.com
-  resources:
-  - customkinds/finalizers
-  verbs:
-  - update
 - apiGroups:
   - crd.sabbir.com
   resources:
   - customkinds/status
   verbs:
   - get
-  - patch
-  - update

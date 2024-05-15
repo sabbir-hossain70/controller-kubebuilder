@@ -1,8 +1,11 @@
----
+# permissions for end users to edit customkinds.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: manager-role
+  labels:
+    app.kubernetes.io/name: controller-kubebuilder
+    app.kubernetes.io/managed-by: kustomize
+  name: customkind-editor-role
 rules:
 - apiGroups:
   - crd.sabbir.com
@@ -19,14 +22,6 @@ rules:
 - apiGroups:
   - crd.sabbir.com
   resources:
-  - customkinds/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - crd.sabbir.com
-  resources:
   - customkinds/status
   verbs:
   - get
-  - patch
-  - update
