@@ -18,12 +18,17 @@ package controller
 
 import (
 	"context"
-
+	"fmt"
 	crdv1alpha1 "github.com/sabbir-hossain70/controller-kubebuilder/api/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+)
+
+var (
+	deployOwnerKey = ".metadata.controller"
 )
 
 // CustomkindReconciler reconciles a Customkind object
@@ -47,12 +52,12 @@ type CustomkindReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.17.3/pkg/reconcile
 func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
+
 	println("inside Reconcile ++++++")
+	fmt.Println("req.Name:", req.Name)
 	// TODO(user): your logic here
 
 	var customkind crdv1alpha1.Customkind
-	//var deploymentInstance appsv1.Deployment
-	//var serviceInstance corev1.Service
 
 	if err := r.Get(ctx, req.NamespacedName, &customkind); err != nil {
 		log.Log.Info("customkind not found")
@@ -61,6 +66,13 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	resourceCreationTimestamp := customkind.CreationTimestamp.Unix()
 	println("resourceCreationTimestamp:++++ ", resourceCreationTimestamp)
+
+	var childDeploys appsv1.DeploymentList
+
+	if err := r.List(ctx, &childDeploys, client.InNamespace(req.Namespace), client.MatchingFields{deployOwnerKey: req.Name}); err != nil {
+		println("Req.Name:", req.Name)
+		log.Log.Info("childDeploys not found")
+	}
 
 	return ctrl.Result{}, nil
 }
