@@ -24,9 +24,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"strings"
 	_ "strings"
 )
 
@@ -71,9 +73,6 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	resourceCreationTimestamp := customkind.CreationTimestamp.Unix()
-	println("resourceCreationTimestamp:++++ ", resourceCreationTimestamp)
-
 	var childDeploys appsv1.DeploymentList
 	if err := r.List(ctx, &childDeploys, client.InNamespace(req.Namespace), client.MatchingFields{deployOwnerKey: req.Name}); err != nil {
 		println("Req.Name:", req.Name)
@@ -84,7 +83,7 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	fmt.Println("childDeploys ", childDeploys)
+	fmt.Println("len of childDeploys......+++... ", len(childDeploys.Items))
 
 	newDeployment := func(customkind *crdv1alpha1.Customkind) *appsv1.Deployment {
 		fmt.Println("New Deployment is called")
@@ -128,6 +127,7 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 	}
 	fmt.Println("New Deployment call is finished.....++++----")
+
 	if len(childDeploys.Items) == 0 || !depOwned(&childDeploys) {
 		deploy := newDeployment(&customkind)
 		if err := r.Create(ctx, deploy); err != nil {
@@ -136,7 +136,91 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		fmt.Println("Created Deployment")
 	}
+
+	var childServices corev1.ServiceList
+	if err := r.List(ctx, &childServices, client.InNamespace(req.Namespace), client.MatchingFields{serviceOwnerKey: req.Name}); err != nil {
+		fmt.Println("Unable to list child services")
+		return ctrl.Result{}, err
+	}
+	fmt.Println("Len of childServices ", len(childServices.Items))
+
+	println("Customkind.Spec.Container.Image ", customkind.Spec.Container.Image)
+
+	//println("Customkind.Spec.Service.ServiceName ", customkind.Spec.Service.ServiceName)
+	//println("Customkind.Name ", customkind.Name)
+
+	getServiceType := func(s string) corev1.ServiceType {
+		if s == "NodePort" {
+			return corev1.ServiceTypeNodePort
+		} else {
+			return corev1.ServiceTypeClusterIP
+		}
+	}
+
+	trimAppName := func(s string) string {
+		name := strings.Split(s, "/")
+		if len(name) == 1 {
+			return name[0]
+		}
+		return name[1]
+	}
+	setName := func(s, suf string) string {
+		if s == "" {
+			s = customkind.Name + suf
+		}
+		return s
+	}
+
+	newService := func(customkind *crdv1alpha1.Customkind) *corev1.Service {
+		fmt.Println("New Service is called")
+		labels := map[string]string{
+			"app":       trimAppName(customkind.Spec.Container.Image),
+			"container": customkind.Name,
+		}
+		return &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      setName(customkind.Spec.Service.ServiceName, "-service"),
+				Namespace: customkind.Namespace,
+				OwnerReferences: []metav1.OwnerReference{
+					*metav1.NewControllerRef(customkind, crdv1alpha1.GroupVersion.WithKind(ourKind)),
+				},
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: labels,
+				Type:     getServiceType(customkind.Spec.Service.ServiceName),
+				Ports: []corev1.ServicePort{
+					{
+						Port:       customkind.Spec.Container.Port,
+						NodePort:   customkind.Spec.Service.ServiceNodePort,
+						TargetPort: intstr.FromInt32(int32(customkind.Spec.Container.Port)),
+					},
+				},
+			},
+		}
+	}
+
+	if len(childServices.Items) == 0 || !srvOwned(&childServices) {
+		srvObj := newService(&customkind)
+		if err := r.Create(ctx, srvObj); err != nil {
+			fmt.Println("Unable to create Service")
+		}
+		fmt.Println("Created Services ", len(childServices.Items))
+	}
+	fmt.Println("<<<end of reconcile function>>>>")
+
 	return ctrl.Result{}, nil
+}
+
+func srvOwned(srvs *corev1.ServiceList) bool {
+	for i := 0; i < len(srvs.Items); i++ {
+		ownerRef := srvs.Items[i].GetOwnerReferences()
+		for j := 0; j < len(ownerRef); j++ {
+			if ownerRef[j].Kind == ourKind && ownerRef[j].APIVersion == apiGVStr {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func depOwned(deploys *appsv1.DeploymentList) bool {
