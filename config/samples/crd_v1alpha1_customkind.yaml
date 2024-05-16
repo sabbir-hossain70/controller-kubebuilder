@@ -6,5 +6,10 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: customkind-sample
 spec:
-  replicas: 3
+  replicas: 5
+  container:
+    image: sabbir70/api-bookserver
+    port: 3000
+  service:
+    serviceType: "NodePort"
   # TODO(user): Add fields here

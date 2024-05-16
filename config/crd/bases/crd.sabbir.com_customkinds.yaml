@@ -39,22 +39,46 @@ spec:
           spec:
             description: CustomkindSpec defines the desired state of Customkind
             properties:
-              foo:
-                description: Foo is an example field of Customkind. Edit customkind_types.go
-                  to remove/update
+              container:
+                properties:
+                  image:
+                    type: string
+                  port:
+                    format: int32
+                    type: integer
+                required:
+                - image
+                - port
+                type: object
+              deploymentName:
                 type: string
               replicas:
                 format: int32
                 type: integer
+              service:
+                properties:
+                  serviceName:
+                    type: string
+                  serviceNodePort:
+                    format: int32
+                    type: integer
+                  serviceType:
+                    type: string
+                required:
+                - serviceType
+                type: object
+            required:
+            - container
             type: object
           status:
             description: CustomkindStatus defines the observed state of Customkind
             properties:
               availableReplicas:
+                description: |-
+                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                  Important: Run "make" to regenerate code after modifying this file
                 format: int32
                 type: integer
-            required:
-            - availableReplicas
             type: object
         type: object
     served: true

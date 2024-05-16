@@ -23,22 +23,39 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+type ServiceSpec struct {
+	// +optional
+	ServiceName string `json:"serviceName"`
+	ServiceType string `json:"serviceType"`
+	// +optional
+	ServiceNodePort int32 `json:"serviceNodePort"`
+}
+
 // CustomkindSpec defines the desired state of Customkind
 type CustomkindSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Customkind. Edit customkind_types.go to remove/update
-	Foo      string `json:"foo,omitempty"`
-	Replicas *int32 `json:"replicas,omitempty"`
+	// +optional
+	DeploymentName string        `json:"deploymentName"`
+	Replicas       *int32        `json:"replicas,omitempty"`
+	Container      ContainerSpec `json:"container"`
+
+	// +optional
+	Service ServiceSpec `json:"service,omitempty"`
+}
+
+type ContainerSpec struct {
+	Image string `json:"image"`
+	Port  int32  `json:"port"`
 }
 
 // CustomkindStatus defines the observed state of Customkind
 type CustomkindStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-
-	AvailableReplicas int32 `json:"availableReplicas"`
+	// +optional
+	AvailableReplicas *int32 `json:"availableReplicas"`
 }
 
 //+kubebuilder:object:root=true

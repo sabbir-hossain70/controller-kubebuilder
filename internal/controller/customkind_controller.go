@@ -75,7 +75,6 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	println("resourceCreationTimestamp:++++ ", resourceCreationTimestamp)
 
 	var childDeploys appsv1.DeploymentList
-	println("sabbir1+++++++++++")
 	if err := r.List(ctx, &childDeploys, client.InNamespace(req.Namespace), client.MatchingFields{deployOwnerKey: req.Name}); err != nil {
 		println("Req.Name:", req.Name)
 		println("Req.Namespace:", req.Namespace)
@@ -89,9 +88,11 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	newDeployment := func(customkind *crdv1alpha1.Customkind) *appsv1.Deployment {
 		fmt.Println("New Deployment is called")
+		fmt.Println("customkind", customkind.Name)
 		labels := map[string]string{
 			"controller": customkind.Name,
 		}
+		fmt.Println("labels:", labels)
 		return &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      customkind.Name,
@@ -105,10 +106,28 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					MatchLabels: labels,
 				},
 				Replicas: customkind.Spec.Replicas,
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Labels: labels,
+					},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name:  "sabbir-container",
+								Image: customkind.Spec.Container.Image,
+								Ports: []corev1.ContainerPort{
+									{
+										ContainerPort: customkind.Spec.Container.Port,
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		}
 	}
-
+	fmt.Println("New Deployment call is finished.....++++----")
 	if len(childDeploys.Items) == 0 || !depOwned(&childDeploys) {
 		deploy := newDeployment(&customkind)
 		if err := r.Create(ctx, deploy); err != nil {
@@ -117,7 +136,6 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		fmt.Println("Created Deployment")
 	}
-
 	return ctrl.Result{}, nil
 }
 
