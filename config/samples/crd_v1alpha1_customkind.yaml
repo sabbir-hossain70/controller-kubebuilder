@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: customkind-sample
 spec:
-  replicas: 8
+  replicas: 10
   container:
     image: sabbir70/api-bookserver
     port: 3000

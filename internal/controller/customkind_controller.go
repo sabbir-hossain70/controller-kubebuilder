@@ -60,19 +60,20 @@ type CustomkindReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.17.3/pkg/reconcile
 func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
-	fmt.Println("ReqName ", req.Name, " ReqNameSpace ", req.Namespace)
+	fmt.Println("ReqKind ", req.NamespacedName)
+	fmt.Println("ctx ", ctx)
 
 	println("inside Reconcile ++++++")
-	fmt.Println("req.Name:", req.Name)
 	// TODO(user): your logic here
 
 	var customkind crdv1alpha1.Customkind
+
+	fmt.Println("customkind ", customkind)
 
 	if err := r.Get(ctx, req.NamespacedName, &customkind); err != nil {
 		log.Log.Info("customkind not found")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
 	var childDeploys appsv1.DeploymentList
 	if err := r.List(ctx, &childDeploys, client.InNamespace(req.Namespace), client.MatchingFields{deployOwnerKey: req.Name}); err != nil {
 		println("Req.Name:", req.Name)
@@ -128,7 +129,26 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 	fmt.Println("New Deployment call is finished.....++++----")
 
-	if len(childDeploys.Items) == 0 || !depOwned(&childDeploys) {
+	/*
+		for i := 0; i < len(childDeploys.Items); i++ {
+			ownerRef := childDeploys.Items[i].GetOwnerReferences()
+			need := false
+			for j := 0; j < len(ownerRef); j++ {
+				if ownerRef[j].Kind == ourKind && ownerRef[j].APIVersion == apiGVStr {
+					need = true
+				}
+			}
+			if !need {
+				continue
+			}
+			fmt.Println("  bbbefore ", *childDeploys.Items[i].Spec.Replicas)
+			*childDeploys.Items[i].Spec.Replicas = *customkind.Spec.Replicas
+			fmt.Println("  aafter ", *childDeploys.Items[i].Spec.Replicas)
+
+		}
+	*/
+
+	if len(childDeploys.Items) == 0 || !depOwned(&childDeploys, &customkind, r) {
 		deploy := newDeployment(&customkind)
 		if err := r.Create(ctx, deploy); err != nil {
 			fmt.Println("Unable to create Deployment")
@@ -211,28 +231,50 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return ctrl.Result{}, nil
 }
 
+func checkDep(dep *appsv1.Deployment, customkind *crdv1alpha1.Customkind, r *CustomkindReconciler) {
+
+	fmt.Println(customkind)
+	if dep.Spec.Replicas != customkind.Spec.Replicas {
+		*dep.Spec.Replicas = *customkind.Spec.Replicas
+		fmt.Println("*dep.Spec.replicas", *dep.Spec.Replicas)
+		fmt.Println("*customkind.Spec.Replicas", *customkind.Spec.Replicas)
+		err := r.Client.Update(context.TODO(), dep)
+		if err != nil {
+			fmt.Println("Unable to update customkind inside checkDep", err)
+		}
+		fmt.Println("Replicas changed!!!! ")
+	}
+
+}
+
 func srvOwned(srvs *corev1.ServiceList) bool {
+	flag := false
 	for i := 0; i < len(srvs.Items); i++ {
 		ownerRef := srvs.Items[i].GetOwnerReferences()
 		for j := 0; j < len(ownerRef); j++ {
 			if ownerRef[j].Kind == ourKind && ownerRef[j].APIVersion == apiGVStr {
-				return true
+				flag = true
 			}
 		}
 	}
-	return false
+	return flag
 }
 
-func depOwned(deploys *appsv1.DeploymentList) bool {
+func depOwned(deploys *appsv1.DeploymentList, customkind *crdv1alpha1.Customkind, r *CustomkindReconciler) bool {
+	flag := false
 	for i := 0; i < len(deploys.Items); i++ {
 		ownerRef := deploys.Items[i].GetOwnerReferences()
+		fmt.Println(deploys.Items[i].Name, " ", *deploys.Items[i].Spec.Replicas)
 		for j := 0; j < len(ownerRef); j++ {
 			if ownerRef[j].Kind == ourKind && ownerRef[j].APIVersion == apiGVStr {
-				return true
+				fmt.Println("before update: ", *deploys.Items[i].Spec.Replicas)
+				checkDep(&deploys.Items[i], customkind, r)
+				fmt.Println("after update: ", *deploys.Items[i].Spec.Replicas)
+				flag = true
 			}
 		}
 	}
-	return false
+	return flag
 }
 
 // SetupWithManager sets up the controller with the Manager.
