@@ -29,13 +29,16 @@ type CustomkindSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of Customkind. Edit customkind_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Foo      string `json:"foo,omitempty"`
+	Replicas *int32 `json:"replicas,omitempty"`
 }
 
 // CustomkindStatus defines the observed state of Customkind
 type CustomkindStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	AvailableReplicas int32 `json:"availableReplicas"`
 }
 
 //+kubebuilder:object:root=true

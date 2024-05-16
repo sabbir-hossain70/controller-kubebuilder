@@ -6,4 +6,5 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: customkind-sample
 spec:
+  replicas: 3
   # TODO(user): Add fields here

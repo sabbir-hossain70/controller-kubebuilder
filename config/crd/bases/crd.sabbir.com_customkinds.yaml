@@ -43,9 +43,18 @@ spec:
                 description: Foo is an example field of Customkind. Edit customkind_types.go
                   to remove/update
                 type: string
+              replicas:
+                format: int32
+                type: integer
             type: object
           status:
             description: CustomkindStatus defines the observed state of Customkind
+            properties:
+              availableReplicas:
+                format: int32
+                type: integer
+            required:
+            - availableReplicas
             type: object
         type: object
     served: true
