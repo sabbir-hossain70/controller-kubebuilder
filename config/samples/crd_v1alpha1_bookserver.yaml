@@ -8,8 +8,8 @@ metadata:
 spec:
   replicas: 8
   container:
-    image: sabbir70/api-bookserver
-    port: 3000
+    image: sabbir70/api-bookserver:1.0.0
+    port: 9090
   service:
     serviceType: "NodePort"
   # TODO(user): Add fields here
