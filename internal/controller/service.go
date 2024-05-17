@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func (r *BookserverReconciler) CheckSrv() error {
+func (r *BookserverReconciler) CheckService() error {
 	srv := &corev1.Service{}
 	if err := r.Client.Get(r.ctx, types.NamespacedName{
 		Name:      r.bookServer.ServiceName(),

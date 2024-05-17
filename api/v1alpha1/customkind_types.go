@@ -41,7 +41,7 @@ type BookserverSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// +optional
-	DeploymentName string        `json:"deploymentName"`
+	DeploymentName string        `json:"deploymentName,omitempty"`
 	Replicas       *int32        `json:"replicas,omitempty"`
 	Container      ContainerSpec `json:"container"`
 

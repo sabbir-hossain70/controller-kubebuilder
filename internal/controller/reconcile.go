@@ -26,7 +26,7 @@ import (
 	_ "strings"
 )
 
-var (
+const (
 	ourKind = "Bookserver"
 )
 
@@ -55,18 +55,13 @@ func (r *BookserverReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		r.Log.Info("bookserver not found")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	if bookserver.Spec.DeploymentName != bookserver.DeploymentName() {
-		bookserver.Spec.DeploymentName = bookserver.DeploymentName()
-		if err := r.Update(ctx, &bookserver); err != nil {
-			r.Log.Error(err, "unable to update bookserver")
-		}
-	}
+	
 	r.bookServer = &bookserver
 
-	if err := r.CheckDeploy(); err != nil {
+	if err := r.CheckDeployment(); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err := r.CheckSrv(); err != nil {
+	if err := r.CheckService(); err != nil {
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil

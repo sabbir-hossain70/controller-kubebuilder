@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	crdv1alpha1 "github.com/sabbir-hossain70/controller-kubebuilder/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -12,7 +11,7 @@ import (
 	_ "strings"
 )
 
-func (r *BookserverReconciler) CheckDeploy() error {
+func (r *BookserverReconciler) CheckDeployment() error {
 
 	deploy := &appsv1.Deployment{}
 
@@ -44,12 +43,10 @@ func (r *BookserverReconciler) CheckDeploy() error {
 }
 
 func (r *BookserverReconciler) NewDeployment() *appsv1.Deployment {
-	fmt.Println("New Deployment is called")
-	fmt.Println("bookserver", r.bookServer.Name)
+	r.Log.Info("New Deployment is called")
 	labels := map[string]string{
 		"controller": r.bookServer.Name,
 	}
-	fmt.Println("labels:", labels)
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      r.bookServer.DeploymentName(),
@@ -70,7 +67,7 @@ func (r *BookserverReconciler) NewDeployment() *appsv1.Deployment {
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:  "sabbir-container",
+							Name:  "bookserver-container",
 							Image: r.bookServer.Spec.Container.Image,
 							Ports: []corev1.ContainerPort{
 								{
