@@ -1,0 +1,16 @@
+apiVersion: crd.sabbir.com/v1alpha1
+kind: Bookserver
+metadata:
+  labels:
+    app.kubernetes.io/name: controller-kubebuilder
+    app.kubernetes.io/managed-by: kustomize
+  name: bookserver-sample
+  namespace: demo
+spec:
+  replicas: 2
+  deploymentName: server
+  container:
+    image: sabbir70/api-bookserver:1.0.0
+    port: 9090
+  service:
+    serviceType: "NodePort"

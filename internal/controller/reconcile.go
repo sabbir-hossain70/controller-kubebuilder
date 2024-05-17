@@ -55,7 +55,7 @@ func (r *BookserverReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		r.Log.Info("bookserver not found")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	
+
 	r.bookServer = &bookserver
 
 	if err := r.CheckDeployment(); err != nil {
