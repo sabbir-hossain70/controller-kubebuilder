@@ -177,7 +177,7 @@ func (GenerationChangedPredicate) Update(e event.UpdateEvent) bool {
 // It is intended to be used in conjunction with the GenerationChangedPredicate, as in the following example:
 //
 //	Controller.Watch(
-//		&source.Kind{Type: v1.MyCustomKind},
+//		&source.Kind{Type: v1.MyBookServer},
 //		&handler.EnqueueRequestForObject{},
 //		predicate.Or(predicate.GenerationChangedPredicate{}, predicate.AnnotationChangedPredicate{}))
 //
@@ -208,7 +208,7 @@ func (AnnotationChangedPredicate) Update(e event.UpdateEvent) bool {
 //
 // Controller.Watch(
 //
-//	&source.Kind{Type: v1.MyCustomKind},
+//	&source.Kind{Type: v1.MyBookServer},
 //	&handler.EnqueueRequestForObject{},
 //	predicate.Or(predicate.GenerationChangedPredicate{}, predicate.LabelChangedPredicate{}))
 //

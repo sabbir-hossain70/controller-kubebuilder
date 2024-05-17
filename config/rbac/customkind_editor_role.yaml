@@ -1,16 +1,16 @@
-# permissions for end users to edit customkinds.
+# permissions for end users to edit bookservers.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: controller-kubebuilder
     app.kubernetes.io/managed-by: kustomize
-  name: customkind-editor-role
+  name: bookserver-editor-role
 rules:
 - apiGroups:
   - crd.sabbir.com
   resources:
-  - customkinds
+  - bookservers
   verbs:
   - create
   - delete
@@ -22,6 +22,6 @@ rules:
 - apiGroups:
   - crd.sabbir.com
   resources:
-  - customkinds/status
+  - bookservers/status
   verbs:
   - get

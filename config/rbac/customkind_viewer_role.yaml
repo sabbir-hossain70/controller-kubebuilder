@@ -1,16 +1,16 @@
-# permissions for end users to view customkinds.
+# permissions for end users to view bookservers.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: controller-kubebuilder
     app.kubernetes.io/managed-by: kustomize
-  name: customkind-viewer-role
+  name: bookserver-viewer-role
 rules:
 - apiGroups:
   - crd.sabbir.com
   resources:
-  - customkinds
+  - bookservers
   verbs:
   - get
   - list
@@ -18,6 +18,6 @@ rules:
 - apiGroups:
   - crd.sabbir.com
   resources:
-  - customkinds/status
+  - bookservers/status
   verbs:
   - get

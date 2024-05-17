@@ -7,7 +7,7 @@ rules:
 - apiGroups:
   - crd.sabbir.com
   resources:
-  - customkinds
+  - bookservers
   verbs:
   - create
   - delete
@@ -19,13 +19,13 @@ rules:
 - apiGroups:
   - crd.sabbir.com
   resources:
-  - customkinds/finalizers
+  - bookservers/finalizers
   verbs:
   - update
 - apiGroups:
   - crd.sabbir.com
   resources:
-  - customkinds/status
+  - bookservers/status
   verbs:
   - get
   - patch

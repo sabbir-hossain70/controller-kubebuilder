@@ -1,12 +1,12 @@
 apiVersion: crd.sabbir.com/v1alpha1
-kind: Customkind
+kind: Bookserver
 metadata:
   labels:
     app.kubernetes.io/name: controller-kubebuilder
     app.kubernetes.io/managed-by: kustomize
-  name: customkind-sample
+  name: bookserver-sample
 spec:
-  replicas: 10
+  replicas: 8
   container:
     image: sabbir70/api-bookserver
     port: 3000

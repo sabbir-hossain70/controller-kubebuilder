@@ -23,16 +23,20 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-type ServiceSpec struct {
-	// +optional
-	ServiceName string `json:"serviceName"`
-	ServiceType string `json:"serviceType"`
-	// +optional
-	ServiceNodePort int32 `json:"serviceNodePort"`
+//+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
+
+// Bookserver is the Schema for the bookservers API
+type Bookserver struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   BookserverSpec   `json:"spec,omitempty"`
+	Status BookserverStatus `json:"status,omitempty"`
 }
 
-// CustomkindSpec defines the desired state of Customkind
-type CustomkindSpec struct {
+// BookserverSpec defines the desired state of Bookserver
+type BookserverSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
@@ -50,8 +54,16 @@ type ContainerSpec struct {
 	Port  int32  `json:"port"`
 }
 
-// CustomkindStatus defines the observed state of Customkind
-type CustomkindStatus struct {
+type ServiceSpec struct {
+	// +optional
+	ServiceName string `json:"serviceName"`
+	ServiceType string `json:"serviceType"`
+	// +optional
+	ServiceNodePort int32 `json:"serviceNodePort"`
+}
+
+// BookserverStatus defines the observed state of Bookserver
+type BookserverStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	// +optional
@@ -59,26 +71,14 @@ type CustomkindStatus struct {
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
 
-// Customkind is the Schema for the customkinds API
-type Customkind struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   CustomkindSpec   `json:"spec,omitempty"`
-	Status CustomkindStatus `json:"status,omitempty"`
-}
-
-//+kubebuilder:object:root=true
-
-// CustomkindList contains a list of Customkind
-type CustomkindList struct {
+// BookserverList contains a list of Bookserver
+type BookserverList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Customkind `json:"items"`
+	Items           []Bookserver `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Customkind{}, &CustomkindList{})
+	SchemeBuilder.Register(&Bookserver{}, &BookserverList{})
 }

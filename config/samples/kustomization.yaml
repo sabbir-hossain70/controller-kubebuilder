@@ -1,4 +1,4 @@
 ## Append samples of your project ##
 resources:
-- crd_v1alpha1_customkind.yaml
+- crd_v1alpha1_bookserver.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

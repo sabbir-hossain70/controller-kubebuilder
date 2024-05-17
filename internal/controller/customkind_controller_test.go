@@ -30,7 +30,7 @@ import (
 	crdv1alpha1 "github.com/sabbir-hossain70/controller-kubebuilder/api/v1alpha1"
 )
 
-var _ = Describe("Customkind Controller", func() {
+var _ = Describe("Bookserver Controller", func() {
 	Context("When reconciling a resource", func() {
 		const resourceName = "test-resource"
 
@@ -40,13 +40,13 @@ var _ = Describe("Customkind Controller", func() {
 			Name:      resourceName,
 			Namespace: "default", // TODO(user):Modify as needed
 		}
-		customkind := &crdv1alpha1.Customkind{}
+		bookserver := &crdv1alpha1.Bookserver{}
 
 		BeforeEach(func() {
-			By("creating the custom resource for the Kind Customkind")
-			err := k8sClient.Get(ctx, typeNamespacedName, customkind)
+			By("creating the custom resource for the Kind Bookserver")
+			err := k8sClient.Get(ctx, typeNamespacedName, bookserver)
 			if err != nil && errors.IsNotFound(err) {
-				resource := &crdv1alpha1.Customkind{
+				resource := &crdv1alpha1.Bookserver{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: "default",
@@ -59,16 +59,16 @@ var _ = Describe("Customkind Controller", func() {
 
 		AfterEach(func() {
 			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &crdv1alpha1.Customkind{}
+			resource := &crdv1alpha1.Bookserver{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 
-			By("Cleanup the specific resource instance Customkind")
+			By("Cleanup the specific resource instance Bookserver")
 			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
 		})
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
-			controllerReconciler := &CustomkindReconciler{
+			controllerReconciler := &BookserverReconciler{
 				Client: k8sClient,
 				Scheme: k8sClient.Scheme(),
 			}

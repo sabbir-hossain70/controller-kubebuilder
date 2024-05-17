@@ -16,9 +16,11 @@ limitations under the License.
 
 package controller
 
+/*
 import (
 	"context"
 	"fmt"
+	"github.com/go-logr/logr"
 	crdv1alpha1 "github.com/sabbir-hossain70/controller-kubebuilder/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -30,48 +32,51 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"strings"
 	_ "strings"
+	"time"
 )
 
 var (
-	deployOwnerKey  = "customkind-sample"
-	serviceOwnerKey = "customkind-sample"
+	deployOwnerKey  = "bookserver-sample"
+	serviceOwnerKey = "bookserver-sample"
 	apiGVStr        = crdv1alpha1.GroupVersion.String()
-	ourKind         = "Customkind"
+	ourKind         = "Bookserver"
 )
 
-// CustomkindReconciler reconciles a Customkind object
-type CustomkindReconciler struct {
+// BookserverReconciler reconciles a Bookserver object
+type BookserverReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme     *runtime.Scheme
+	Log        logr.Logger
+	ctx        context.Context
+	bookServer *crdv1alpha1.Bookserver
 }
 
-//+kubebuilder:rbac:groups=crd.sabbir.com,resources=customkinds,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=crd.sabbir.com,resources=customkinds/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=crd.sabbir.com,resources=customkinds/finalizers,verbs=update
+//+kubebuilder:rbac:groups=crd.sabbir.com,resources=bookservers,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=crd.sabbir.com,resources=bookservers/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=crd.sabbir.com,resources=bookservers/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
-// the Customkind object against the actual cluster state, and then
+// the Bookserver object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.17.3/pkg/reconcile
-func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *BookserverReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
+
 	fmt.Println("ReqKind ", req.NamespacedName)
 	fmt.Println("ctx ", ctx)
+	time.Sleep(time.Second * 5)
 
-	println("inside Reconcile ++++++")
 	// TODO(user): your logic here
 
-	var customkind crdv1alpha1.Customkind
+	var bookserver crdv1alpha1.Bookserver
 
-	fmt.Println("customkind ", customkind)
-
-	if err := r.Get(ctx, req.NamespacedName, &customkind); err != nil {
-		log.Log.Info("customkind not found")
+	if err := r.Get(ctx, req.NamespacedName, &bookserver); err != nil {
+		log.Log.Info("bookserver not found")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	var childDeploys appsv1.DeploymentList
@@ -84,28 +89,26 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	fmt.Println("len of childDeploys......+++... ", len(childDeploys.Items))
-
-	newDeployment := func(customkind *crdv1alpha1.Customkind) *appsv1.Deployment {
+	NewDeployment := func(bookserver *crdv1alpha1.Bookserver) *appsv1.Deployment {
 		fmt.Println("New Deployment is called")
-		fmt.Println("customkind", customkind.Name)
+		fmt.Println("bookserver", bookserver.Name)
 		labels := map[string]string{
-			"controller": customkind.Name,
+			"controller": bookserver.Name,
 		}
 		fmt.Println("labels:", labels)
 		return &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      customkind.Name,
-				Namespace: customkind.Namespace,
+				Name:      bookserver.Name,
+				Namespace: bookserver.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(customkind, crdv1alpha1.GroupVersion.WithKind(ourKind)),
+					*metav1.NewControllerRef(bookserver, crdv1alpha1.GroupVersion.WithKind(ourKind)),
 				},
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{
 					MatchLabels: labels,
 				},
-				Replicas: customkind.Spec.Replicas,
+				Replicas: bookserver.Spec.Replicas,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: labels,
@@ -114,10 +117,10 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 						Containers: []corev1.Container{
 							{
 								Name:  "sabbir-container",
-								Image: customkind.Spec.Container.Image,
+								Image: bookserver.Spec.Container.Image,
 								Ports: []corev1.ContainerPort{
 									{
-										ContainerPort: customkind.Spec.Container.Port,
+										ContainerPort: bookserver.Spec.Container.Port,
 									},
 								},
 							},
@@ -127,31 +130,9 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			},
 		}
 	}
-	fmt.Println("New Deployment call is finished.....++++----")
-
-	/*
-		for i := 0; i < len(childDeploys.Items); i++ {
-			ownerRef := childDeploys.Items[i].GetOwnerReferences()
-			need := false
-			for j := 0; j < len(ownerRef); j++ {
-				if ownerRef[j].Kind == ourKind && ownerRef[j].APIVersion == apiGVStr {
-					need = true
-				}
-			}
-			if !need {
-				continue
-			}
-			fmt.Println("  bbbefore ", *childDeploys.Items[i].Spec.Replicas)
-			*childDeploys.Items[i].Spec.Replicas = *customkind.Spec.Replicas
-			fmt.Println("  aafter ", *childDeploys.Items[i].Spec.Replicas)
-
-		}
-	*/
-
-	if len(childDeploys.Items) == 0 || !depOwned(&childDeploys, &customkind, r) {
-		deploy := newDeployment(&customkind)
+	if len(childDeploys.Items) == 0 || !depOwned(&childDeploys, &bookserver, r) {
+		deploy := NewDeployment(&bookserver)
 		if err := r.Create(ctx, deploy); err != nil {
-			fmt.Println("Unable to create Deployment")
 			return ctrl.Result{}, err
 		}
 		fmt.Println("Created Deployment")
@@ -164,10 +145,10 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 	fmt.Println("Len of childServices ", len(childServices.Items))
 
-	println("Customkind.Spec.Container.Image ", customkind.Spec.Container.Image)
+	println("Bookserver.Spec.Container.Image ", bookserver.Spec.Container.Image)
 
-	//println("Customkind.Spec.Service.ServiceName ", customkind.Spec.Service.ServiceName)
-	//println("Customkind.Name ", customkind.Name)
+	//println("Bookserver.Spec.Service.ServiceName ", bookserver.Spec.Service.ServiceName)
+	//println("Bookserver.Name ", bookserver.Name)
 
 	getServiceType := func(s string) corev1.ServiceType {
 		if s == "NodePort" {
@@ -186,33 +167,33 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 	setName := func(s, suf string) string {
 		if s == "" {
-			s = customkind.Name + suf
+			s = bookserver.Name + suf
 		}
 		return s
 	}
 
-	newService := func(customkind *crdv1alpha1.Customkind) *corev1.Service {
+	newService := func(bookserver *crdv1alpha1.Bookserver) *corev1.Service {
 		fmt.Println("New Service is called")
 		labels := map[string]string{
-			"app":       trimAppName(customkind.Spec.Container.Image),
-			"container": customkind.Name,
+			"app":       trimAppName(bookserver.Spec.Container.Image),
+			"container": bookserver.Name,
 		}
 		return &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      setName(customkind.Spec.Service.ServiceName, "-service"),
-				Namespace: customkind.Namespace,
+				Name:      setName(bookserver.Spec.Service.ServiceName, "-service"),
+				Namespace: bookserver.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
-					*metav1.NewControllerRef(customkind, crdv1alpha1.GroupVersion.WithKind(ourKind)),
+					*metav1.NewControllerRef(bookserver, crdv1alpha1.GroupVersion.WithKind(ourKind)),
 				},
 			},
 			Spec: corev1.ServiceSpec{
 				Selector: labels,
-				Type:     getServiceType(customkind.Spec.Service.ServiceName),
+				Type:     getServiceType(bookserver.Spec.Service.ServiceName),
 				Ports: []corev1.ServicePort{
 					{
-						Port:       customkind.Spec.Container.Port,
-						NodePort:   customkind.Spec.Service.ServiceNodePort,
-						TargetPort: intstr.FromInt32(int32(customkind.Spec.Container.Port)),
+						Port:       bookserver.Spec.Container.Port,
+						NodePort:   bookserver.Spec.Service.ServiceNodePort,
+						TargetPort: intstr.FromInt32(int32(bookserver.Spec.Container.Port)),
 					},
 				},
 			},
@@ -220,7 +201,7 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	if len(childServices.Items) == 0 || !srvOwned(&childServices) {
-		srvObj := newService(&customkind)
+		srvObj := newService(&bookserver)
 		if err := r.Create(ctx, srvObj); err != nil {
 			fmt.Println("Unable to create Service")
 		}
@@ -231,16 +212,16 @@ func (r *CustomkindReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return ctrl.Result{}, nil
 }
 
-func checkDep(dep *appsv1.Deployment, customkind *crdv1alpha1.Customkind, r *CustomkindReconciler) {
+func checkDep(dep *appsv1.Deployment, bookserver *crdv1alpha1.Bookserver, r *BookserverReconciler) {
 
-	fmt.Println(customkind)
-	if dep.Spec.Replicas != customkind.Spec.Replicas {
-		*dep.Spec.Replicas = *customkind.Spec.Replicas
+	fmt.Println(bookserver)
+	if dep.Spec.Replicas != bookserver.Spec.Replicas {
+		*dep.Spec.Replicas = *bookserver.Spec.Replicas
 		fmt.Println("*dep.Spec.replicas", *dep.Spec.Replicas)
-		fmt.Println("*customkind.Spec.Replicas", *customkind.Spec.Replicas)
+		fmt.Println("*bookserver.Spec.Replicas", *bookserver.Spec.Replicas)
 		err := r.Client.Update(context.TODO(), dep)
 		if err != nil {
-			fmt.Println("Unable to update customkind inside checkDep", err)
+			fmt.Println("Unable to update bookserver inside checkDep", err)
 		}
 		fmt.Println("Replicas changed!!!! ")
 	}
@@ -260,7 +241,7 @@ func srvOwned(srvs *corev1.ServiceList) bool {
 	return flag
 }
 
-func depOwned(deploys *appsv1.DeploymentList, customkind *crdv1alpha1.Customkind, r *CustomkindReconciler) bool {
+func depOwned(deploys *appsv1.DeploymentList, bookserver *crdv1alpha1.Bookserver, r *BookserverReconciler) bool {
 	flag := false
 	for i := 0; i < len(deploys.Items); i++ {
 		ownerRef := deploys.Items[i].GetOwnerReferences()
@@ -268,7 +249,7 @@ func depOwned(deploys *appsv1.DeploymentList, customkind *crdv1alpha1.Customkind
 		for j := 0; j < len(ownerRef); j++ {
 			if ownerRef[j].Kind == ourKind && ownerRef[j].APIVersion == apiGVStr {
 				fmt.Println("before update: ", *deploys.Items[i].Spec.Replicas)
-				checkDep(&deploys.Items[i], customkind, r)
+				checkDep(&deploys.Items[i], bookserver, r)
 				fmt.Println("after update: ", *deploys.Items[i].Spec.Replicas)
 				flag = true
 			}
@@ -278,7 +259,7 @@ func depOwned(deploys *appsv1.DeploymentList, customkind *crdv1alpha1.Customkind
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *CustomkindReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *BookserverReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	println("inside manager ++++")
 
 	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &appsv1.Deployment{}, deployOwnerKey, func(rawObj client.Object) []string {
@@ -326,8 +307,9 @@ func (r *CustomkindReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&crdv1alpha1.Customkind{}).
+		For(&crdv1alpha1.Bookserver{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.Service{}).
 		Complete(r)
 }
+*/

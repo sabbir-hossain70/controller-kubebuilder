@@ -4,20 +4,20 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.14.0
-  name: customkinds.crd.sabbir.com
+  name: bookservers.crd.sabbir.com
 spec:
   group: crd.sabbir.com
   names:
-    kind: Customkind
-    listKind: CustomkindList
-    plural: customkinds
-    singular: customkind
+    kind: Bookserver
+    listKind: BookserverList
+    plural: bookservers
+    singular: bookserver
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Customkind is the Schema for the customkinds API
+        description: Bookserver is the Schema for the bookservers API
         properties:
           apiVersion:
             description: |-
@@ -37,7 +37,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: CustomkindSpec defines the desired state of Customkind
+            description: BookserverSpec defines the desired state of Bookserver
             properties:
               container:
                 properties:
@@ -71,7 +71,7 @@ spec:
             - container
             type: object
           status:
-            description: CustomkindStatus defines the observed state of Customkind
+            description: BookserverStatus defines the observed state of Bookserver
             properties:
               availableReplicas:
                 description: |-
