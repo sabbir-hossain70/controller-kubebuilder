@@ -1,7 +1,7 @@
 #!/bin/bash
 
-OLD_KIND="CustomKind"
-NEW_KIND="BookServer"
+OLD_KIND="customkinds"
+NEW_KIND="bookservers"
 
 # Update kind in API types
 find ./api -type f -name "*.go" -exec sed -i "s/${OLD_KIND}/${NEW_KIND}/g" {} +

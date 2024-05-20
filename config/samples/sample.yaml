@@ -7,7 +7,7 @@ metadata:
   name: bookserver-sample
   namespace: demo
 spec:
-  replicas: 2
+  replicas: 3
   deploymentName: server
   container:
     image: sabbir70/api-bookserver:1.0.0
